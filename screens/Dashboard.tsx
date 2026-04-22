@@ -6,13 +6,24 @@ import { CATEGORY_COLORS, CATEGORY_EMOJIS } from '../constants/categories';
 import { formatDuration, formatTime } from '../utils/formatters';
 import ActivityInputCard from '../components/ActivityInputCard';
 import RunningActivityCard from '../components/RunningActivityCard';
+import { useActivities } from '../contexts/ActivityContext';
 
 export default function Dashboard() {
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [currentActivity, setCurrentActivity] = useState<Activity | null>(null);
+  const { 
+    activities: allActivities, 
+    currentActivity, 
+    addActivity, 
+    updateCurrentActivity, 
+    deleteActivity: removeActivity,
+    getActivitiesForDate 
+  } = useActivities();
+  
   const [activityTitle, setActivityTitle] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category>('work');
   const [elapsedTime, setElapsedTime] = useState(0);
+  
+  // Get today's activities
+  const activities = getActivitiesForDate(new Date());
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -44,7 +55,7 @@ export default function Dashboard() {
       category: selectedCategory,
     };
 
-    setCurrentActivity(newActivity);
+    updateCurrentActivity(newActivity);
     setActivityTitle('');
     setElapsedTime(0);
   };
@@ -61,13 +72,9 @@ export default function Dashboard() {
       duration,
     };
 
-    setActivities([completedActivity, ...activities]);
-    setCurrentActivity(null);
+    addActivity(completedActivity);
+    updateCurrentActivity(null);
     setElapsedTime(0);
-  };
-
-  const deleteActivity = (id: string) => {
-    setActivities(activities.filter(a => a.id !== id));
   };
 
   const getTotalTimeByCategory = (): Record<Category, number> => {
@@ -142,7 +149,7 @@ export default function Dashboard() {
               </Text>
               <Text style={styles.activityDuration}>{activity.duration && formatDuration(activity.duration)}</Text>
             </View>
-            <TouchableOpacity onPress={() => deleteActivity(activity.id)} style={styles.deleteButton}>
+            <TouchableOpacity onPress={() => removeActivity(activity.id)} style={styles.deleteButton}>
               <Text style={styles.deleteButtonText}>✕</Text>
             </TouchableOpacity>
           </View>
